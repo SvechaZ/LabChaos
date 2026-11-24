@@ -1,0 +1,456 @@
+/* roombook
+   พื้นขาว สีน้ำเงินสีเดียวสำหรับสิ่งที่กดได้และการจองของตัวเอง
+   ค่า contrast ในวงเล็บคำนวณตามสูตร WCAG 2.2 เทียบกับพื้นที่สีนั้นวางอยู่ */
+
+:root {
+  --bg: #ffffff;
+  --surface: #f6f8fb;
+  --text: #0f1e36;          /* 16.7:1 บน bg */
+  --muted: #4b5b73;         /* 6.9:1 บน bg, 6.5:1 บน surface */
+  --line: #e4e9f0;          /* เส้นแบ่งตกแต่ง ไม่ใช่ขอบของปุ่ม */
+  --control: #8794a8;       /* ขอบช่องกรอกและปุ่ม 3.07:1 ผ่านเกณฑ์ 3:1 */
+
+  --blue: #1d4ed8;          /* 6.7:1 บน bg, ขาวบนสีนี้ 6.7:1 */
+  --blue-dark: #1e3a8a;     /* ขาวบนสีนี้ 10.4:1 */
+  --blue-soft: #e8efff;     /* พื้นช่องที่คนอื่นจอง ตัวหนังสือ blue-dark 9.0:1 */
+  --blue-hover: #eef3ff;    /* พื้นช่องว่างตอนชี้ ตัวหนังสือ blue 6.0:1 */
+
+  --danger: #b42318;        /* 6.1:1 บน danger-soft, ขาวบนสีนี้ 6.6:1 */
+  --danger-soft: #fef3f2;
+  --warn: #8a4b00;          /* 6.2:1 บน warn-soft */
+  --warn-soft: #fff4e0;
+
+  --font-body: 'Bai Jamjuree', 'Sarabun', 'Tahoma', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'Menlo', monospace;
+
+  --room-col: 9rem;
+  --hour-col: 5.25rem;
+  --head-h: 2.5rem;
+  --cell-h: 3.75rem;
+  --radius: 8px;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+}
+
+.mono { font-family: var(--font-mono); }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
+
+/* โฟกัสจากคีย์บอร์ดเห็นชัดทุกที่ 6.7:1 บนพื้นขาว */
+:focus-visible {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.skip {
+  position: absolute; left: 1rem; top: -4rem; z-index: 20;
+  padding: .6rem 1rem; border-radius: var(--radius);
+  background: var(--blue); color: #fff; font-weight: 600;
+}
+.skip:focus { top: 1rem; }
+
+/* ------------------------------------------------------------ หัวหน้า */
+
+.top {
+  padding: 1.25rem clamp(1rem, 5vw, 4rem);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand { display: flex; align-items: center; gap: .8rem; }
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 8px;
+  background: var(--blue);
+  color: #fff;
+  font: 500 .85rem var(--font-mono);
+}
+
+.brand__title { margin: 0; font-size: 1.15rem; font-weight: 700; line-height: 1.3; }
+.brand__place { margin: 0; font-size: .875rem; color: var(--muted); }
+
+/* ------------------------------------------------------------ วันที่ */
+
+main {
+  flex: 1;
+  min-width: 0; /* ให้ตารางเลื่อนแนวนอนในกรอบตัวเอง ไม่ดันทั้งหน้าให้กว้างเกินจอ */
+  width: 100%;
+  max-width: 82rem;
+  margin: 0 auto;
+  padding: 2rem clamp(1rem, 5vw, 4rem) 3rem;
+}
+
+.day {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  margin-bottom: 1.75rem;
+}
+
+.day__date { display: flex; align-items: flex-end; gap: .9rem; margin: 0; }
+
+.day__num {
+  font-weight: 700;
+  font-size: clamp(3rem, 8vw, 4.5rem);
+  line-height: .9;
+  letter-spacing: -.03em;
+  color: var(--blue);
+}
+
+.day__text { display: flex; flex-direction: column; padding-bottom: .2rem; }
+.day__weekday { font-weight: 600; font-size: 1.15rem; line-height: 1.3; }
+.day__month { color: var(--muted); font-size: .95rem; }
+
+.datenav { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+
+.datepick input {
+  min-height: 2.75rem;
+  padding: .45rem .7rem;
+  font: 400 .95rem var(--font-mono);
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--control);
+  border-radius: var(--radius);
+}
+
+/* ------------------------------------------------------------ ปุ่ม */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  min-height: 2.75rem;      /* 44px เกินเกณฑ์ 24px ของ 2.5.8 */
+  padding: .5rem 1rem;
+  font: 600 .95rem var(--font-body);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background-color .15s, color .15s, border-color .15s;
+}
+.btn:disabled { cursor: not-allowed; opacity: .5; }
+
+.btn--quiet { background: var(--bg); color: var(--text); border-color: var(--control); }
+.btn--quiet:hover:not(:disabled) { background: var(--surface); border-color: var(--text); }
+
+.btn--primary { background: var(--blue); color: #fff; }
+.btn--primary:hover:not(:disabled) { background: var(--blue-dark); }
+
+.btn--danger { background: var(--danger); color: #fff; }
+.btn--danger:hover:not(:disabled) { background: #8f1c13; }
+
+.btn--link {
+  min-height: 2.75rem;
+  padding-inline: .5rem;
+  background: none;
+  color: var(--blue);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.btn--link[hidden] { display: none; }
+
+/* ------------------------------------------------------------ แจ้งปัญหา */
+
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem 1rem;
+  margin-bottom: 1.25rem;
+  padding: .85rem 1rem;
+  border-radius: var(--radius);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.notice[hidden] { display: none; }
+.notice__text { margin: 0; font-weight: 600; }
+
+/* ------------------------------------------------------------ ตาราง */
+
+.board:focus { outline: none; }
+
+.board__scroll {
+  overflow: auto;
+  border-radius: var(--radius);
+  background: var(--bg);
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.board[aria-busy="true"] .grid tbody { opacity: .5; }
+
+.grid {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 100%;
+  table-layout: fixed;
+}
+
+.grid th,
+.grid td { padding: 0; }
+
+.grid thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  height: var(--head-h);
+  width: var(--hour-col);
+  min-width: var(--hour-col);
+  padding: 0 .6rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font: 500 .8rem var(--font-mono);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.grid thead th:first-child {
+  left: 0;
+  z-index: 3;
+  width: var(--room-col);
+  min-width: var(--room-col);
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+
+.grid tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  width: var(--room-col);
+  height: var(--cell-h);
+  padding: .35rem .9rem;
+  background: var(--bg);
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  font-weight: 400;
+}
+.grid tbody tr:last-child th,
+.grid tbody tr:last-child td { border-bottom: 0; }
+
+.room__code { display: block; font: 500 1rem var(--font-mono); }
+.room__meta { display: block; font-size: .8rem; color: var(--muted); }
+
+.grid td {
+  height: var(--cell-h);
+  padding: .3rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.grid td + td { border-left: 1px solid var(--line); }
+
+/* ปุ่มและแถบในช่องเลื่อนให้พ้นหัวตารางที่ติดขอบ ตอนโฟกัสด้วย Tab (2.4.11) */
+.slot {
+  scroll-margin-top: calc(var(--head-h) + .5rem);
+  scroll-margin-left: calc(var(--room-col) + .5rem);
+}
+
+.slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 2.75rem;
+  padding: .25rem .4rem;
+  border-radius: 6px;
+  font: 600 .8rem/1.25 var(--font-body);
+  text-align: center;
+}
+
+.slot__name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+/* ว่าง: ช่องเปล่า ตอนชี้หรือโฟกัสขึ้นคำว่า จอง */
+.slot--free {
+  border: 0;
+  background: transparent;
+  color: transparent;
+  cursor: pointer;
+  transition: background-color .12s, color .12s;
+}
+.slot--free:hover,
+.slot--free:focus-visible {
+  background: var(--blue-hover);
+  color: var(--blue);
+}
+
+.slot--taken { background: var(--blue-soft); color: var(--blue-dark); }
+
+.slot--mine {
+  border: 0;
+  background: var(--blue);
+  color: #fff;
+  cursor: pointer;
+}
+.slot--mine:hover { background: var(--blue-dark); }
+
+.slot--fresh { animation: appear .3s ease-out both; }
+@keyframes appear {
+  from { opacity: 0; transform: scale(.94); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* เลยเวลา: ลายเส้นเฉียงจาง ๆ มีข้อความซ่อนไว้ให้ screen reader */
+.grid td.is-past {
+  background: repeating-linear-gradient(135deg, transparent 0 6px, rgba(15, 30, 54, .05) 6px 7px);
+}
+
+.grid__message {
+  padding: 1.25rem 1rem !important;
+  color: var(--muted);
+  font-size: .9rem;
+}
+.grid__message--bad { color: var(--danger); font-weight: 600; }
+
+/* ------------------------------------------------------------ คำอธิบายสี */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: .875rem;
+  color: var(--muted);
+}
+.legend li { display: flex; align-items: center; gap: .5rem; }
+
+.swatch { width: 1rem; height: 1rem; border-radius: 4px; }
+.swatch--free  { box-shadow: inset 0 0 0 1px var(--control); }
+.swatch--taken { background: var(--blue-soft); box-shadow: inset 0 0 0 1px #b9c9f5; }
+.swatch--mine  { background: var(--blue); }
+.swatch--past  {
+  background: repeating-linear-gradient(135deg, transparent 0 3px, rgba(15, 30, 54, .22) 3px 4px);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+/* ------------------------------------------------------------ แถบคำขอล่าสุด */
+
+.wire {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem 1rem;
+  padding: .7rem clamp(1rem, 5vw, 4rem);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: .8rem;
+}
+.wire__label { font-weight: 600; color: var(--text); }
+.wire__code {
+  padding: .05rem .45rem;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.wire__code:empty { display: none; }
+.wire__code--ok   { background: var(--blue-soft); color: var(--blue-dark); }
+.wire__code--warn { background: var(--warn-soft); color: var(--warn); }
+.wire__code--bad  { background: var(--danger); color: #fff; }
+.wire__version { margin-left: auto; }
+
+/* ------------------------------------------------------------ หน้าต่างจอง */
+
+.sheet {
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 20px 50px rgba(15, 30, 54, .18), 0 0 0 1px var(--line);
+}
+.sheet::backdrop { background: rgba(15, 30, 54, .4); }
+.sheet[open] { animation: lift .2s ease-out; }
+@keyframes lift {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.sheet__form { padding: 1.5rem; }
+.sheet__title { margin: 0; font: 500 1.5rem/1.2 var(--font-mono); }
+.sheet__when { margin: .3rem 0 1.25rem; color: var(--muted); }
+.sheet__note { margin: 0; }
+
+.field { display: grid; gap: .35rem; }
+.field__label { font-weight: 600; }
+.field__input {
+  min-height: 2.75rem;
+  padding: .5rem .75rem;
+  font: 400 1rem var(--font-body);
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--control);
+  border-radius: var(--radius);
+}
+.field__input[aria-invalid="true"] { border-color: var(--danger); border-width: 2px; }
+.field__hint { margin: 0; font-size: .85rem; color: var(--muted); }
+
+.sheet__error {
+  margin: 1rem 0 0;
+  padding: .6rem .8rem;
+  border-radius: 6px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-weight: 600;
+  font-size: .92rem;
+}
+.sheet__error[hidden] { display: none; }
+
+.sheet__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .6rem;
+  margin-top: 1.5rem;
+}
+
+/* ------------------------------------------------------------ จอเล็ก */
+
+@media (max-width: 640px) {
+  :root { --room-col: 6rem; --hour-col: 4.75rem; }
+  .room__meta { display: none; }
+  .wire__version { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

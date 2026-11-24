@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>roombook จองห้องติว หอสมุด</title>
+  <meta name="theme-color" content="#ffffff">
+  <link rel="stylesheet" href="/fonts/bai-jamjuree/400.css">
+  <link rel="stylesheet" href="/fonts/bai-jamjuree/600.css">
+  <link rel="stylesheet" href="/fonts/bai-jamjuree/700.css">
+  <link rel="stylesheet" href="/fonts/ibm-plex-mono/400.css">
+  <link rel="stylesheet" href="/fonts/ibm-plex-mono/500.css">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <a class="skip" href="#board">ข้ามไปที่ตารางห้อง</a>
+
+  <header class="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true">rb</span>
+      <div>
+        <h1 class="brand__title">จองห้องติว</h1>
+        <p class="brand__place">หอสมุด ชั้น 2 และ 3 เปิด 08:00 ถึง 20:00</p>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="day" aria-label="วันที่ที่กำลังดู">
+      <p class="day__date">
+        <span class="day__num" id="day-number">--</span>
+        <span class="day__text">
+          <span class="day__weekday" id="weekday"></span>
+          <span class="day__month" id="month-year"></span>
+        </span>
+      </p>
+
+      <nav class="datenav" aria-label="เลือกวัน">
+        <button class="btn btn--quiet" id="prev-day" type="button">
+          <span aria-hidden="true">&larr;</span> วันก่อนหน้า
+        </button>
+        <label class="datepick">
+          <span class="sr-only">เลือกวันที่</span>
+          <input type="date" id="date-input">
+        </label>
+        <button class="btn btn--quiet" id="next-day" type="button">
+          วันถัดไป <span aria-hidden="true">&rarr;</span>
+        </button>
+        <button class="btn btn--link" id="today" type="button">กลับไปวันนี้</button>
+      </nav>
+    </section>
+
+    <div class="notice" id="notice" role="alert" hidden>
+      <p class="notice__text" id="notice-text"></p>
+      <button class="btn btn--primary" id="notice-retry" type="button">โหลดใหม่</button>
+    </div>
+
+    <section class="board" id="board" tabindex="-1" aria-busy="true">
+      <div class="board__scroll">
+        <table class="grid" id="grid">
+          <caption class="sr-only" id="grid-caption">ตารางห้องว่างรายชั่วโมง</caption>
+          <thead id="grid-head"></thead>
+          <tbody id="grid-body"></tbody>
+        </table>
+      </div>
+
+      <ul class="legend" aria-label="ความหมายของช่องในตาราง">
+        <li><span class="swatch swatch--free" aria-hidden="true"></span>ว่าง กดเพื่อจอง</li>
+        <li><span class="swatch swatch--taken" aria-hidden="true"></span>มีคนจองแล้ว แสดงชื่อผู้จอง</li>
+        <li><span class="swatch swatch--mine" aria-hidden="true"></span>คุณจองจากเครื่องนี้ กดเพื่อยกเลิก</li>
+        <li><span class="swatch swatch--past" aria-hidden="true"></span>เลยเวลาแล้ว</li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- ประกาศให้ screen reader ฟังเฉพาะเรื่องที่ผู้ใช้ทำ เช่น จองสำเร็จ หรือเปลี่ยนวัน -->
+  <p class="sr-only" id="status" role="status" aria-live="polite"></p>
+
+  <footer class="wire">
+    <span class="wire__label">คำขอล่าสุด</span>
+    <span class="wire__call mono" id="wire-call">ยังไม่มี</span>
+    <span class="wire__code mono" id="wire-code"></span>
+    <span class="wire__ms mono" id="wire-ms"></span>
+    <span class="wire__version mono" id="wire-version"></span>
+  </footer>
+
+  <dialog class="sheet" id="sheet" aria-labelledby="sheet-title" aria-describedby="sheet-when">
+    <form class="sheet__form" id="sheet-form" method="dialog" novalidate>
+      <h2 class="sheet__title" id="sheet-title"></h2>
+      <p class="sheet__when" id="sheet-when"></p>
+
+      <div class="field">
+        <label class="field__label" for="booked-by">ชื่อผู้จอง</label>
+        <input class="field__input" id="booked-by" name="booked_by" type="text"
+               maxlength="40" autocomplete="name" required
+               aria-describedby="booked-by-hint">
+        <p class="field__hint" id="booked-by-hint">ชื่อนี้จะแสดงบนตารางให้ทุกคนเห็น ไม่เกิน 40 ตัวอักษร</p>
+      </div>
+
+      <p class="sheet__error" id="sheet-error" hidden></p>
+
+      <div class="sheet__actions">
+        <button class="btn btn--quiet" type="button" id="sheet-cancel">ยกเลิก</button>
+        <button class="btn btn--primary" type="submit" id="sheet-submit">ยืนยันการจอง</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="sheet" id="release" aria-labelledby="release-title" aria-describedby="release-when release-note">
+    <form class="sheet__form" id="release-form" method="dialog">
+      <h2 class="sheet__title" id="release-title"></h2>
+      <p class="sheet__when" id="release-when"></p>
+      <p class="sheet__note" id="release-note">ยกเลิกแล้วช่องนี้จะว่างให้คนอื่นจองต่อได้ทันที</p>
+      <p class="sheet__error" id="release-error" role="alert" hidden></p>
+      <div class="sheet__actions">
+        <button class="btn btn--quiet" type="button" id="release-keep">เก็บการจองไว้</button>
+        <button class="btn btn--danger" type="submit" id="release-submit">ยกเลิกการจอง</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+# ติดตั้งใหม่ได้ด้วย npm ci
+node_modules/
+
+# มีรหัสผ่าน ห้ามขึ้น git
+.env
+
+.DS_Store
+npm-debug.log*
