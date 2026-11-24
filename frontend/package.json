@@ -1,0 +1,10 @@
+{
+  "name": "roombook-frontend",
+  "version": "1.0.0",
+  "description": "หน้าเว็บ roombook ใช้ npm แค่ดึงไฟล์ฟอนต์ตอน build image",
+  "private": true,
+  "dependencies": {
+    "@fontsource/bai-jamjuree": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0"
+  }
+}

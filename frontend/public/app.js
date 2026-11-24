@@ -64,8 +64,15 @@
 
   // ---------------------------------------------------------------- จำในเบราว์เซอร์
 
+  // จำการจองของเราด้วยรหัสคู่กับห้อง วัน ชั่วโมง และชื่อ ไม่ใช่รหัสอย่างเดียว
+  // รหัสเริ่มนับใหม่เมื่อล้างฐานข้อมูล ถ้าจำแค่รหัส จะเห็นการจองของคนอื่นเป็นของเรา
+  const mineKey = (id, roomId, date, hour, name) => `${id}|${roomId}|${date}|${hour}|${name}`;
+
   function readMine() {
-    try { return new Set(JSON.parse(localStorage.getItem(MINE_KEY) || '[]')); } catch { return new Set(); }
+    try {
+      const list = JSON.parse(localStorage.getItem(MINE_KEY) || '[]');
+      return new Set(list.filter((x) => typeof x === 'string'));
+    } catch { return new Set(); }
   }
   function writeMine(set) {
     try { localStorage.setItem(MINE_KEY, JSON.stringify([...set].slice(-200))); } catch { /* โหมดส่วนตัว */ }
@@ -156,7 +163,8 @@
     const td = document.createElement('td');
     const when = `${room.code} เวลา ${span(slot.start_hour)}`;
 
-    if (slot.booked && mine.has(slot.booking_id)) {
+    const key = slot.booked ? mineKey(slot.booking_id, room.id, state.date, slot.start_hour, slot.booked_by) : null;
+    if (slot.booked && mine.has(key)) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'slot slot--mine' + (opts.fresh === slot.booking_id ? ' slot--fresh' : '');
@@ -382,7 +390,8 @@
 
     if (r.ok) {
       try { localStorage.setItem(NAME_KEY, name); } catch { /* โหมดส่วนตัว */ }
-      mine.add(r.data.booking.id);
+      const b = r.data.booking;
+      mine.add(mineKey(b.id, b.room_id, b.date, b.start_hour, b.booked_by));
       writeMine(mine);
       el.sheet.close();
       await reloadRoom(room.id, { fresh: r.data.booking.id, focusKey: key });
@@ -420,7 +429,7 @@
     el.releaseSubmit.disabled = true;
     const r = await request('DELETE', `/api/bookings/${slot.booking_id}`);
     if (r.ok || r.status === 404) {
-      mine.delete(slot.booking_id);
+      mine.delete(mineKey(slot.booking_id, room.id, state.date, slot.start_hour, slot.booked_by));
       writeMine(mine);
       el.release.close();
       await reloadRoom(room.id, { focusKey: key });

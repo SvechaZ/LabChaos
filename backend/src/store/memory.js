@@ -1,7 +1,7 @@
 'use strict';
 
 // ที่เก็บข้อมูลชั่วคราวในหน่วยความจำ ข้อมูลหายเมื่อปิดแอป
-// ขั้นที่ 2 จะมี store/postgres.js ที่มีฟังก์ชันชื่อเดียวกัน server.js จึงไม่ต้องแก้
+// ใช้ตอนพัฒนาบนเครื่องที่ไม่มีฐานข้อมูล ใน Docker ใช้ postgres.js ที่มีฟังก์ชันชื่อเดียวกัน
 
 const { OPEN_HOUR, CLOSE_HOUR, StoreError } = require('./common');
 
@@ -67,4 +67,7 @@ async function cancelBooking(id) {
   bySlot.delete(slotKey(b.room_id, b.date, b.start_hour));
 }
 
-module.exports = { listRooms, getRoom, getSlots, createBooking, cancelBooking };
+async function ping() {}
+async function close() {}
+
+module.exports = { listRooms, getRoom, getSlots, createBooking, cancelBooking, ping, close };

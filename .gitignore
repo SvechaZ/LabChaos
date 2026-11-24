@@ -1,4 +1,4 @@
-# ติดตั้งใหม่ได้ด้วย npm ci
+# ติดตั้งใหม่ได้ด้วย npm ci ทั้งใน backend/ และ frontend/
 node_modules/
 
 # มีรหัสผ่าน ห้ามขึ้น git
